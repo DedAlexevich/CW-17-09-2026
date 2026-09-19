@@ -2,6 +2,7 @@
 #include <random>
 #include <stdexcept>
 #include <vector>
+
 #include <pthread.h>
 #include <string.h>
 
@@ -33,15 +34,14 @@ namespace kuznetsov {
 
 int main(int argc, char** argv)
 {
-  if (argc < 4) {
-    std::cerr << "Not enought args\n";
-    return 1;
-  }
-  size_t threads, tests;
+
+  size_t threads = 4, tests;
   double r;
-  threads = std::stoull(argv[1]);
-  tests = std::stoull(argv[2]);
-  r = std::stod(argv[3]);
+  if (argc > 1) {
+    threads = std::stoull(argv[1]);
+  }
+
+  std::cin >> r >> tests;
 
   if (threads == 0 || tests == 0 || r <= 0) {
     std::cerr << "threads, tests and radius must be >0\n";
@@ -114,4 +114,3 @@ void* kuznetsov::proxyCalc(void* arg)
   arguments->result = kuz::calc(arguments->r, arguments->tests, arguments->seed);
   return nullptr;
 }
-
