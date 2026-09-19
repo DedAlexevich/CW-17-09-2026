@@ -1,11 +1,11 @@
 #include <iostream>
-#include <pthread.h>
 #include <random>
-#include <string.h>
-#include <vector>
 #include <stdexcept>
+#include <vector>
+#include <pthread.h>
+#include <string.h>
 
-namespace kuznetsov{
+namespace kuznetsov {
   struct arg_t {
     double* r;
     size_t* tests;
@@ -17,13 +17,14 @@ namespace kuznetsov{
     std::vector< pthread_t >& ths;
     size_t& created;
     size_t& start;
-    ~Thread_Guard() {
+    ~Thread_Guard()
+    {
       for (size_t i = start; i < created; ++i) {
         pthread_join(ths[i], nullptr);
       }
     }
   };
-  
+
   double area(double r, size_t threads, size_t tests);
   size_t calc(double r, size_t tests, size_t seed);
   bool isInside(double x, double y, double r);
@@ -41,16 +42,16 @@ int main(int argc, char** argv)
   threads = std::stoull(argv[1]);
   tests = std::stoull(argv[2]);
   r = std::stod(argv[3]);
-  
+
   if (threads == 0 || tests == 0 || r <= 0) {
     std::cerr << "threads, tests and radius must be >0\n";
     return 1;
   }
-  
+
   double ar;
   try {
     ar = kuznetsov::area(r, threads, tests);
-  } catch(const std::runtime_error& e) {
+  } catch (const std::runtime_error& e) {
     std::cerr << e.what() << '\n';
     return 1;
   }
@@ -65,7 +66,7 @@ bool kuznetsov::isInside(double x, double y, double r)
 size_t kuznetsov::calc(double r, size_t tests, size_t seed)
 {
   std::default_random_engine eng(seed);
-  std::uniform_real_distribution<double> dist(0, 2 * r);
+  std::uniform_real_distribution< double > dist(0, 2 * r);
   size_t res = 0;
   for (size_t i = 0; i < tests; ++i) {
     res += isInside(dist(eng), dist(eng), r);
@@ -77,12 +78,12 @@ double kuznetsov::area(double r, size_t threads, size_t tests)
 {
   size_t sumTests = tests * threads;
   size_t insided = 0;
-  
+
   std::vector< pthread_t > thrds(threads);
   std::vector< arg_t > args(threads, {&r, &tests, 0, 0});
-  
+
   size_t created = 0, start = 0;
-  Thread_Guard tg {thrds, created, start};
+  Thread_Guard tg{thrds, created, start};
 
   for (; created < threads; ++created) {
     args[created].seed = created;
@@ -91,8 +92,8 @@ double kuznetsov::area(double r, size_t threads, size_t tests)
       throw std::runtime_error(strerror(err));
     }
   }
-  
-  for(size_t j = 0; j < created; ++j) {
+
+  for (size_t j = 0; j < created; ++j) {
     int err = pthread_join(thrds[j], nullptr);
     if (err) {
       throw std::runtime_error(strerror(err));
