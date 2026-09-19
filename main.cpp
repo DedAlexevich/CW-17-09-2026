@@ -7,8 +7,8 @@
 
 namespace kuznetsov {
   struct arg_t {
-    double* r;
-    size_t* tests;
+    double r;
+    size_t tests;
     size_t seed;
     size_t result;
   };
@@ -76,17 +76,19 @@ size_t kuznetsov::calc(double r, size_t tests, size_t seed)
 
 double kuznetsov::area(double r, size_t threads, size_t tests)
 {
-  size_t sumTests = tests * threads;
+  size_t testOnThread = tests / threads;
+  size_t modOnLastThread = tests % threads;
   size_t insided = 0;
 
   std::vector< pthread_t > thrds(threads);
-  std::vector< arg_t > args(threads, {&r, &tests, 0, 0});
+  std::vector< arg_t > args(threads, {r, testOnThread, 0, 0});
 
   size_t created = 0, start = 0;
   Thread_Guard tg{thrds, created, start};
 
   for (; created < threads; ++created) {
     args[created].seed = created;
+    args[created].tests = testOnThread + (created < modOnLastThread);
     int err = pthread_create(&thrds[created], nullptr, proxyCalc, &args[created]);
     if (err != 0) {
       throw std::runtime_error(strerror(err));
@@ -102,14 +104,14 @@ double kuznetsov::area(double r, size_t threads, size_t tests)
     insided += args[j].result;
   }
 
-  return (2 * r) * (2 * r) * insided / static_cast< double >(sumTests);
+  return (2 * r) * (2 * r) * insided / static_cast< double >(tests);
 }
 
 void* kuznetsov::proxyCalc(void* arg)
 {
   namespace kuz = kuznetsov;
   kuz::arg_t* arguments = static_cast< kuz::arg_t* >(arg);
-  arguments->result = kuz::calc(*(arguments->r), *(arguments->tests), arguments->seed);
+  arguments->result = kuz::calc(arguments->r, arguments->tests, arguments->seed);
   return nullptr;
 }
 
