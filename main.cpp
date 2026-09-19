@@ -35,14 +35,18 @@ namespace kuznetsov {
 int main(int argc, char** argv)
 {
 
-  size_t threads = 4, tests;
-  double r;
+  size_t threads = 4, tests = 0;
+  double r = 0;
   if (argc > 1) {
     threads = std::stoull(argv[1]);
   }
 
   std::cin >> r >> tests;
-
+  if(!std::cin) {
+    std::cerr << "Bad enter\n";
+    return 1;
+  }
+  
   if (threads == 0 || tests == 0 || r <= 0) {
     std::cerr << "threads, tests and radius must be >0\n";
     return 1;
