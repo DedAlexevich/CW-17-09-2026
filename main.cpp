@@ -14,16 +14,16 @@ namespace kuznetsov {
     size_t result;
   };
 
-  struct Thread_Guard {
-    std::vector< pthread_t >& ths;
-    size_t& created;
-    size_t& start;
-    ~Thread_Guard()
+  struct ThreadGuard {
+    ~ThreadGuard()
     {
       for (size_t i = start; i < created; ++i) {
         pthread_join(ths[i], nullptr);
       }
     }
+    std::vector< pthread_t >& ths;
+    size_t& created;
+    size_t& start;
   };
 
   double area(double r, size_t threads, size_t tests);
@@ -42,11 +42,11 @@ int main(int argc, char** argv)
   }
 
   std::cin >> r >> tests;
-  if(!std::cin) {
+  if (!std::cin) {
     std::cerr << "Bad enter\n";
     return 1;
   }
-  
+
   if (threads == 0 || tests == 0 || r <= 0) {
     std::cerr << "threads, tests and radius must be >0\n";
     return 1;
@@ -88,7 +88,7 @@ double kuznetsov::area(double r, size_t threads, size_t tests)
   std::vector< arg_t > args(threads, {r, testOnThread, 0, 0});
 
   size_t created = 0, start = 0;
-  Thread_Guard tg{thrds, created, start};
+  ThreadGuard tg{thrds, created, start};
 
   for (; created < threads; ++created) {
     args[created].seed = created;
@@ -101,10 +101,10 @@ double kuznetsov::area(double r, size_t threads, size_t tests)
 
   for (size_t j = 0; j < created; ++j) {
     int err = pthread_join(thrds[j], nullptr);
+    ++start;
     if (err) {
       throw std::runtime_error(strerror(err));
     }
-    ++start;
     insided += args[j].result;
   }
 
